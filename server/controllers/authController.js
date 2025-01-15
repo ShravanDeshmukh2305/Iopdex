@@ -4,23 +4,31 @@ exports.signup = async (req, res) => {
   try {
     const { email, password, name } = req.body;
 
-    
+  
     const existingUser = await authService.findUserByEmail(email);
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-   
+    
     const hashedPassword = await authService.hashPassword(password);
-    console.log('Hashed password:', hashedPassword);  
+    console.log('Hashed password:', hashedPassword);
+
+    
     const newUser = await authService.createUser({ email, password: hashedPassword, name });
 
     res.status(201).json({ message: 'User registered successfully', userId: newUser._id });
   } catch (error) {
-    console.error('Error in signup:', error); 
+    if (error.name === 'ValidationError') {
+      
+      console.error('Validation error:', error.message);
+      return res.status(400).json({ message: error.message });
+    }
+    console.error('Error in signup:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 exports.login = async (req, res) => {
   try {
